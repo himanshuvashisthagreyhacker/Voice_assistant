@@ -3,8 +3,9 @@ import { detectSilence } from "../utils/utility"; // Import silence detection fu
 import { apiRequest } from "../utils/apiRequest";
 
 
-export default function Recorder({ setAudioURL, setTranscribedText }) {
+export default function Recorder({ setTranscribedText, setAudioBase64}) {
   const [isRecording, setIsRecording] = useState(false);
+  const [tempTranscribedText, setTempTranscribedText] = useState("")
   const recognitionRef = useRef(null);
 
   const startRecording = async () => {
@@ -35,7 +36,7 @@ export default function Recorder({ setAudioURL, setTranscribedText }) {
 
     recognitionRef.current.onresult = (event) => {
       const transcript = event.results[event.results.length - 1][0].transcript;
-      setTranscribedText(transcript);
+      setTempTranscribedText(transcript);
       processQuery(transcript); // Call the query processing function
     };
 
@@ -52,8 +53,6 @@ export default function Recorder({ setAudioURL, setTranscribedText }) {
     };
 
     recognitionRef.current.start();
-
-    // Start silence detection (stops recording if silence is detected for 3 seconds)
     detectSilence(0.01, 2000, () => {
       console.log("Silence detected! Stopping recording...");
       stopRecording();
@@ -63,6 +62,7 @@ export default function Recorder({ setAudioURL, setTranscribedText }) {
   const stopRecording = () => {
     if (recognitionRef.current) {
       recognitionRef.current.stop();
+      setTranscribedText(tempTranscribedText)
       setIsRecording(false);
     }
   };
@@ -84,6 +84,7 @@ export default function Recorder({ setAudioURL, setTranscribedText }) {
 
     if (data?.raw_response) {
       setTranscribedText(data.raw_response);
+      setAudioBase64(data.summarized_response)
     }
   };
 

@@ -1,35 +1,27 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 
-export default function AudioPlayer({ audioURL, audioBase64 }) {
-  const audioRef = useRef(new Audio()); // Create an Audio instance
-
-  useEffect(() => {
-    if (audioBase64) {
-      playBase64Audio(audioBase64);
-    } else if (audioURL) {
-      playAudioFromURL(audioURL);
-    }
-  }, [audioBase64, audioURL]);
-
-  // **Play Base64 Audio**
-  const playBase64Audio = (base64String) => {
-    const audioBlob = new Blob(
-      [Uint8Array.from(atob(base64String), (c) => c.charCodeAt(0))],
-      { type: "audio/mp3" }
-    );
-    const generatedURL = URL.createObjectURL(audioBlob);
-    playAudioFromURL(generatedURL);
-  };
+export default function AudioPlayer({ audioBase64 }) {
+  const audioRef = useRef(new Audio()); // Create an Audio instance  
 
   // **Play Audio from a URL**
-  const playAudioFromURL = (url) => {
+  const playAudioFromURL = useCallback((url) => {
     if (audioRef.current) {
       audioRef.current.pause(); // Stop any currently playing audio
       audioRef.current.src = url; // Update audio source
       audioRef.current.load();
       audioRef.current.play();
     }
-  };
+  }, []);
+
+  // **Play Base64 Audio**
+  const playBase64Audio = useCallback((base64String) => {
+    const audioBlob = new Blob(
+      [Uint8Array.from(atob(base64String), (c) => c.charCodeAt(0))],
+      { type: "audio/mp3" }
+    );
+    const generatedURL = URL.createObjectURL(audioBlob);
+    playAudioFromURL(generatedURL);
+  }, [playAudioFromURL]);
 
   // **Stop Audio Playback**
   const stopAudio = () => {
@@ -38,6 +30,12 @@ export default function AudioPlayer({ audioURL, audioBase64 }) {
       audioRef.current.currentTime = 0; // Reset to start
     }
   };
+
+  useEffect(() => {
+    if (audioBase64) {
+      playBase64Audio(audioBase64);
+    } 
+  }, [audioBase64, playBase64Audio]);
 
   return (
     <div>
