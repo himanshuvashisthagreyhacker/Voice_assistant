@@ -2,12 +2,12 @@ import React, { useState, useEffect, useRef } from "react";
 import { apiRequest } from "../utils/apiRequest";
 import "../styles/Transcription.css";
 
-export default function Transcription({ transcribedText, previousQuery, setResponse, autoSubmit }) {
+export default function Transcription({ transcribedText, previousQuery, setResponse, autoSubmit = true }) {
   const [editedText, setEditedText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const submitTimeoutRef = useRef(null);
-  const lastSubmittedTextRef = useRef("");
+  const lastSubmittedTextRef = useRef(""); // 🧠 Track last submitted query
 
   useEffect(() => {
     if (transcribedText && transcribedText.trim() !== "") {
@@ -16,11 +16,12 @@ export default function Transcription({ transcribedText, previousQuery, setRespo
       if (autoSubmit) {
         if (submitTimeoutRef.current) clearTimeout(submitTimeoutRef.current);
 
+        // 🕒 Debounce submit
         submitTimeoutRef.current = setTimeout(() => {
           if (transcribedText !== lastSubmittedTextRef.current) {
             handleSubmit(transcribedText);
           }
-        }, 2000);
+        }, 1000); // Delay of 1s
       }
     }
 
@@ -37,20 +38,20 @@ export default function Transcription({ transcribedText, previousQuery, setRespo
         if (text !== lastSubmittedTextRef.current) {
           handleSubmit(text);
         }
-      }, 3000);
+      }, 3000); // Manual edit debounce
     }
   };
 
   const handleSubmit = async (textToSubmit = editedText) => {
     const trimmedText = textToSubmit.trim();
-    
+
     if (!trimmedText) {
       alert("Cannot submit an empty response.");
       return;
     }
-    
-    // if ((trimmedText === lastSubmittedTextRef.current)) return;
-    console.log("In here");
+
+    // ✅ Check if it's already submitted
+    if (trimmedText === lastSubmittedTextRef.current) return;
 
     lastSubmittedTextRef.current = trimmedText;
 
@@ -84,7 +85,7 @@ export default function Transcription({ transcribedText, previousQuery, setRespo
         onChange={(e) => handleTextChange(e.target.value)}
         disabled={autoSubmit}
       />
-      <button className="submit-btn" onClick={() => handleSubmit(editedText)} disabled={loading}>
+      <button className="submit-btn" onClick={() => handleSubmit()} disabled={loading}>
         {loading ? "Submitting..." : "Submit"}
       </button>
 
