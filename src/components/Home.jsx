@@ -1,20 +1,54 @@
 import React, { useState } from "react";
 import Recorder from "./Recorder";
-import AudioPlayer from "./AudioPlayer";
 import Transcription from "./Transcription";
+import Response from "./Response";
 
 export default function Home() {
-  const [audioURL, setAudioURL] = useState(null);
+  let autoSubmit = true;
   const [transcribedText, setTranscribedText] = useState("");
-  const [responses, setResponses] = useState("");
-  const [audioBase64, setAudioBase64] = useState(null);
+  const [response, setResponse] = useState(null);
+  const [previousQuery, setPreviousQuery] = useState(null);
+
+  // 🔁 Called whenever user starts a new recording
+  const handleResetBeforeRecording = () => {
+    setTranscribedText("");
+    setResponse(null);
+    setPreviousQuery(null);
+  };
 
   return (
-    <div className="flex flex-col items-center p-4">
-      <h1 className="text-xl font-bold">G6 Voice Assistant</h1>
-      <Recorder setTranscribedText={setTranscribedText} setResponses={setResponses} />
-      <AudioPlayer audioURL={audioURL} audioBase64={audioBase64}/>
-      <Transcription transcribedText={transcribedText} />
+    <div className="home-container">
+      <h1>G6 Voice Assistant</h1>
+
+      <Recorder onTranscription={setTranscribedText}
+        onReset={handleResetBeforeRecording}
+      />
+
+      {transcribedText && (
+        <Transcription
+          autoSubmit={autoSubmit}
+          transcribedText={transcribedText}
+          previousQuery={previousQuery}
+          setResponse={setResponse}
+        // setResponseTime={setResponseTime}
+        />
+      )}
+
+      {response && (
+        <Response
+          autoSubmit={autoSubmit}
+          response={response}
+          setResponse={setResponse}
+          transcribedText={transcribedText}
+          setTranscribedText={setTranscribedText}
+          setPreviousQuery={setPreviousQuery}
+        />
+      )}
+      {response?.database_query_execution_time && <div className="response-box">
+        {response?.database_query_execution_time && <div className="response-time">⏰ Database query execution time: {response.database_query_execution_time} </div>}
+        {response?.processing_time_except_database_query_execution && <div className="response-time">⏰ LLM query execution time: {response.processing_time_except_database_query_execution} </div>}
+      </div>}
+
     </div>
   );
 }
